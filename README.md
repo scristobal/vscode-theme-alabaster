@@ -1,75 +1,82 @@
-# Alabaster Theme
+# Still
 
-A light theme with minimal amount of highlighting for [Visual Studio Code](http://code.visualstudio.com).
+**VS Code Dark 2026 and Light 2026, with syntax highlighting stripped back to the essentials.** Each appearance keeps its stock editor background, interface, tabs, sidebar, panels, terminal, selections, and other workbench colors.
 
-## Motivation
+![Still Dark in VS Code](assets/still-dark.png)
 
-Most color themes highlight everything they can, ending up looking like a fireworks show.
+![Still Light in VS Code](assets/still-light.png)
 
-Instead, Alabaster uses minimal highlighting; it defines just four classes:
+The highlighting follows the principles in Nikita Prokopov’s [syntax highlighting article](https://tonsky.me/blog/syntax-highlighting/), using four syntax accents:
 
-  1. Strings
-  2. All statically known constants (numbers, symbols, user-defined keywords, boolean values)
-  3. Comments
-  4. Global definitions
+| Code | Still Dark | Still Light |
+| --- | --- | --- |
+| References, calls, type references, and keywords | Default text `#BBBEBF` | Default text `#202020` |
+| Function and named type declarations | Yellow `#E5C76B` | Ochre `#8A6500` |
+| Variable, parameter, and property declarations | Blue `#7EB6E8` | Blue `#1F6FAA` |
+| Strings, numbers, and literal values | Green `#A8CF80` | Green `#3C6D2C` |
+| Comments | Violet `#C49BE0` | Violet `#8250A0` |
+| Punctuation and symbolic operators | Gray `#808080` | Gray `#767676` |
 
-Additionally:
+A declaration gets color where a name is introduced; its uses stay plain. Numbers and strings share a color. Comments stand out. Syntax uses no bold or italics. Bracket nesting uses the punctuation color instead of adding more syntax colors.
 
-- Alabaster does not highlight standard language keywords (if, else, function, etc). They are usually least important and most obvious part of any program.
+## Required settings
 
-- Alabaster highlights comments. Most themes try to dim comments by using low-contrast greys. I think if code was complex enough that it deserved an explanation then it’s that explanation we should see and read first. It would be a crime to hide it.
+**Still requires semantic highlighting to distinguish declarations from references.** Enable it in **User Settings (JSON)**, preserving any existing customization rules:
 
-- Alabaster doesn’t use font variations. It’s hard to scan code when it jumps between normal, **bold** and *italics* all the time. Also, not all fonts provide bold/italics variants.
+```jsonc
+"editor.semanticHighlighting.enabled": true,
+"editor.semanticTokenColorCustomizations": {
+  "enabled": true
+}
+```
 
-- Having minimal amount of rules means you can consciously use them to look for the exact piece of information you need. Most other “fireworks” themes provide only one meaningful contribution: if it’s colored it’s probably syntactically correct. Instead, in Alabaster you can actually remember all the rules, and e.g. if you need to look for a string you know that you’re looking for a green token. And all the strings really pop out because there are not many other things highlighted.
+These settings apply to every color theme. Remove any language-specific override that disables semantic highlighting. See VS Code’s [semantic highlighting guide](https://code.visualstudio.com/api/language-extensions/semantic-highlight-guide#enablement-of-semantic-highlighting).
 
-- Alabaster only highlights things that parser could identify reliably. I believe that if highlighting works only partially then it does more harm than good. When highlighting works reliably, your brain learns to rely on it. When it’s not reliable, your brain spends precious brain cycles to re-check everything it sees on the screen.
+## Language support
 
-![Screenshot](https://raw.githubusercontent.com/tonsky/vscode-theme-alabaster/master/screenshot.png)
+Semantic highlighting uses a language server’s `declaration` and `definition` modifiers. Ordinary semantic tokens use the default editor foreground, including library symbols and readonly references. For Rust, **rust-analyzer must also be running**. The built-in Rust TextMate grammar does not distinguish local declarations or function/closure parameters from their uses. Still colors their `declaration` or `definition` semantic modifiers blue. Closure bindings use the function-definition color; references remain plain.
 
-## What our users [are saying](https://marketplace.visualstudio.com/items?itemName=tonsky.theme-alabaster&ssr=false#review-details)?
+The TextMate fallback is deliberately conservative. It colors declarations only when the grammar identifies them separately from references. Regression tests use the actual grammars bundled with VS Code:
 
-> It's like I had this weight on my eyes, and now it's gone. Awesome!
+- JavaScript and TypeScript: function, method, parameter, variable, and supported named type declarations.
+- Python: function, class, and parameter declarations. Assignment targets need semantic information from a language extension.
+- Rust fallback: function and named type declarations. With rust-analyzer and semantic highlighting enabled: local bindings, tuple/pattern bindings, function and closure parameters, loops, and closure definitions.
+- Clojure: global definitions. Its bundled grammar does not distinguish function definitions from other global definitions, local bindings from references, or discarded forms from active code.
 
-– Alex Sugak ★★★★★
-
-> After your theme others looks like unreadable neon things 🤯
-
-– lamartire ★★★★★
-
-> Minimalistic cool
-
-– denisgrib ★★★★★
-
-> Super minimal and undistracting. Easy to read.
-
-– Josh Bernitt ★★★★★
-
-> A little bit confusing at first if you're from The Dark Land. But then you just chill.
-
-– aenor.realm ★★★★★
+Other languages get the same baseline and semantic rules, but declaration coverage depends on their grammar and language extension. A theme cannot reliably distinguish explanatory comments from commented-out code unless the grammar exposes that distinction. Explicit discard/inactive-comment scopes are gray when available.
 
 ## Install
 
-1. Go to `Extensions`
-2. Search for `alabaster`
-3. Install
+Requires VS Code 1.142 or later. Building requires Node.js 22 or later.
 
-Or alternatively open the extension webpage in browser and install from there: https://marketplace.visualstudio.com/items?itemName=tonsky.theme-alabaster
+```sh
+npm ci
+npm run package
+code --install-extension ./still-theme-0.6.0.vsix --force
+```
 
-## License
+Select **Still Dark** or **Still Light** in **Preferences: Color Theme**. The extension ID is `scristobal.still-theme`.
 
-[MIT License](https://github.com/tonsky/vscode-theme-alabaster/blob/master/./LICENSE.txt)
+## Development
 
-## Variations
+```sh
+npm run build
+npm run check
+npm test
+```
 
-- Dark for VS Code [apust/vscode-rubber-theme](https://github.com/apust/vscode-rubber-theme)
-- Dark for VS Code (closer to the original ST version)
-  [gargakshit/vscode-theme-alabaster-dark](https://github.com/gargakshit/vscode-theme-alabaster-dark)
-- Light for VS Code (closer to JetBrains IDEs version) [atrskv/vscode-theme-alabaster](https://github.com/atrskv/vscode-theme-alabaster)
-- for Sublime Text 3 [tonsky/sublime-scheme-alabaster](https://github.com/tonsky/sublime-scheme-alabaster)
-- for JetBrains IDEs (IntelliJ IDEA etc) [tonsky/intellij-alabaster](https://github.com/tonsky/intellij-alabaster)
-- for JetBrains IDEs as a plugin [vlnabatov/alabaster-theme](https://github.com/vlnabatov/alabaster-theme)
-- for JetBrains IDEs as a plugin (dark version) [vlnabatov/alabaster-dark-theme](https://github.com/vlnabatov/alabaster-dark-theme)
-- for Sublime Text 2 (unofficial) [freetonik/Travertine](https://github.com/freetonik/Travertine)
-- Original version for LightTable [tonsky/alabaster-lighttable-skin](https://github.com/tonsky/alabaster-lighttable-skin)
+`src/dark-2026.json` and `src/light-2026.json` contain the resolved workbench colors from VS Code 1.142.0’s built-in Dark 2026 and Light 2026 themes, including their Modern, Plus, and Visual Studio theme inheritance. They contain no inherited syntax rules. `src/theme.mjs` preserves those colors and replaces only syntax bracket colors. Edit syntax roles in `src/palettes.mjs` and rules in `src/highlighting.mjs`.
+
+Tests compare every workbench color with the corresponding installed 2026 theme and check declaration/reference pairs using VS Code’s actual JavaScript, TypeScript, Python, Rust, and Clojure grammars. Set `VSCODE_APP_ROOT` to your installation’s `resources/app` directory if needed. `npm run check` checks generated output and syntax contrast.
+
+The Rust fixture in `tests/fixtures/rust/` exercises parameter declarations, locals, tuple bindings, closures, loop bindings, and `if let`. Open that folder with rust-analyzer enabled to check declaration colors against their plain references. Both appearances were verified using the actual rust-analyzer semantic tokens and rendered VS Code colors, including the settings that previously suppressed them.
+
+Press **F5** to launch **Preview Still**. Review `playground.ts` with semantic highlighting both enabled and disabled: declarations get color, while calls and references stay plain. Use **Developer: Inspect Editor Tokens and Scopes** to inspect a token.
+
+## Origin and license
+
+Still is maintained by [Samuel Cristobal](https://github.com/scristobal). Its workbench colors come from Microsoft’s [VS Code default themes](https://github.com/microsoft/vscode/tree/main/extensions/theme-defaults), under the MIT license. The syntax rules follow the article above.
+
+The project began as an independent fork of [Alabaster for VS Code](https://github.com/tonsky/vscode-theme-alabaster) by Nikita Prokopov. Its Git history, [upstream changelog](UPSTREAM_CHANGELOG.md), and copyright notice are retained.
+
+[MIT License](LICENSE.txt).

@@ -1,39 +1,72 @@
 {
-	"name": "theme-alabaster",
-	"description": "A light theme with minimal amount of highlighting",
-	"displayName": "Alabaster Theme",
-	"version": "0.2.9",
-	"publisher": "tonsky",
+	"name": "still-theme",
+	"displayName": "Still",
+	"description": "VS Code Dark 2026 and Light 2026 with minimal, purposeful syntax highlighting.",
+	"version": "0.6.0",
+	"publisher": "scristobal",
+	"author": {
+		"name": "Samuel Cristobal",
+		"url": "https://github.com/scristobal"
+	},
 	"license": "MIT",
-	"maintainers": [
-		"Nikita Prokopov <prokopov@gmail.com>"
-	],
+	"private": true,
 	"engines": {
-		"vscode": "^1.12.0"
+		"vscode": "^1.142.0",
+		"node": ">=22"
 	},
 	"categories": [
 		"Themes"
 	],
+	"keywords": [
+		"theme",
+		"dark",
+		"light",
+		"minimal",
+		"syntax",
+		"alabaster"
+	],
+	"icon": "icon.png",
+	"files": [
+		"themes/**",
+		"assets/**",
+		"icon.png",
+		"README.md",
+		"CHANGELOG.md",
+		"UPSTREAM_CHANGELOG.md",
+		"LICENSE.txt"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/scristobal/vscode-theme-alabaster.git"
+	},
+	"bugs": {
+		"url": "https://github.com/scristobal/vscode-theme-alabaster/issues"
+	},
+	"homepage": "https://github.com/scristobal/vscode-theme-alabaster#readme",
+	"scripts": {
+		"build": "node scripts/build-themes.mjs",
+		"check": "node scripts/build-themes.mjs --check",
+		"vscode:prepublish": "npm run build && npm run check && npm test",
+		"package": "vsce package --no-dependencies --no-rewrite-relative-links --no-gitHubIssueLinking",
+		"test": "node tests/highlighting.test.mjs"
+	},
+	"devDependencies": {
+		"@vscode/vsce": "4.0.0",
+		"vscode-oniguruma": "2.0.1",
+		"vscode-textmate": "9.3.2"
+	},
 	"contributes": {
 		"themes": [
 			{
-				"label": "Alabaster",
+				"label": "Still Dark",
+				"uiTheme": "vs-dark",
+				"path": "./themes/still-dark-color-theme.json"
+			},
+			{
+				"label": "Still Light",
 				"uiTheme": "vs",
-				"path": "./theme/alabaster-color-theme.json"
+				"path": "./themes/still-light-color-theme.json"
 			}
 		]
-	},
-	"icon": "icon.png",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/tonsky/vscode-theme-alabaster.git"
-	},
-	"bugs": {
-		"url": "https://github.com/tonsky/vscode-theme-alabaster/issues"
-	},
-	"__metadata": {
-		"id": "c629b26b-49e4-4995-ba6e-5d083752f3d6",
-		"publisherDisplayName": "Nikita Prokopov",
-		"publisherId": "8fe0f11e-8bd6-4cf2-9ee6-acead847e970"
 	}
 }
