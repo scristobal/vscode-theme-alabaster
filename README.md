@@ -57,6 +57,12 @@ code --install-extension ./still-theme-0.6.0.vsix --force
 
 Select **Still Dark** or **Still Light** in **Preferences: Color Theme**. The extension ID is `scristobal.still-theme`.
 
+### Settings only
+
+To use Still without installing the extension, apply [`still-settings.jsonc`](still-settings.jsonc). It reproduces both appearances as color customizations on VS Code’s built-in themes. Merge its three settings into **User Settings (JSON)**, keeping any existing entries under the same keys, then select **Dark 2026** or **Light 2026** in **Preferences: Color Theme**.
+
+The file enables semantic highlighting for those two themes. An explicit `"editor.semanticHighlighting.enabled": false`, including a language-specific one, still turns it off.
+
 ## Development
 
 ```sh

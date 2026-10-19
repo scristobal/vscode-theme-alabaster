@@ -30,6 +30,7 @@
 		"themes/**",
 		"assets/**",
 		"icon.png",
+		"still-settings.jsonc",
 		"README.md",
 		"CHANGELOG.md",
 		"UPSTREAM_CHANGELOG.md",
