@@ -15,6 +15,26 @@ function expect(lines, row, text, color, occurrence = 0) {
     assert.equal(span.style, 0, `${text} must have no font decoration`);
   }
 }
+// Resolve a stock 2026 theme through its includes, as VS Code loads it.
+async function resolveStock(file) {
+  const data = JSON.parse(await readFile(file, 'utf8'));
+  const parent = data.include ? await resolveStock(path.resolve(path.dirname(file), data.include)) : { colors: {}, tokenColors: [], semanticTokenColors: {} };
+  return {
+    colors: { ...parent.colors, ...data.colors },
+    tokenColors: [...parent.tokenColors, ...(data.tokenColors ?? [])],
+    semanticTokenColors: { ...parent.semanticTokenColors, ...data.semanticTokenColors },
+  };
+}
+const vscodeRoot = await findVSCodeAppRoot();
+// still-settings.jsonc has only whole-line comments.
+const settings = JSON.parse((await readFile(new URL('../still-settings.jsonc', import.meta.url), 'utf8')).replace(/^\/\/.*$/gm, ''));
+// Real files and nested Markdown cover the contexts the settings restate stock rules in.
+const samples = [
+  ['source.ts', 'playground.ts'], ['source.rust', 'playground.rs'], ['source.clojure', 'playground.clj'],
+  ['source.rust', 'tests/fixtures/rust/src/main.rs'], ['source.js', 'src/settings.mjs'], ['source.json', 'package.json'],
+  ['text.html.markdown', 'README.md'],
+];
+const markdown = '# The `readQueue` heading with *emphasis* and **strong**\nSee [the `readQueue` link](https://example.com) and `code`.';
 // Expectations describe the visible design independently of theme selectors.
 const appearances = [
   { type: 'dark', plain: '#BBBEBF', punctuation: '#808080', declaration: '#E5C76B', binding: '#7EB6E8', literal: '#A8CF80', comment: '#C49BE0' },
@@ -60,22 +80,34 @@ for (const { type, plain, punctuation, declaration, binding, literal, comment } 
     const python = await tokenize('source.python', 'ready = a == b and a is not None or a in b');
     expect(python, 0, '==', punctuation); expect(python, 0, 'and', plain); expect(python, 0, 'is', plain); expect(python, 0, 'not', plain); expect(python, 0, 'or', plain); expect(python, 0, 'in', plain); expect(python, 0, 'None', literal);
   });
+  const stock = await resolveStock(path.join(vscodeRoot, `extensions/theme-defaults/themes/2026-${type}.json`));
   test('Stock 2026 workbench colors are preserved exactly, with only syntax bracket colors overridden', async () => {
-    const root = await findVSCodeAppRoot();
-    async function resolveColors(file) {
-      const data = JSON.parse(await readFile(file, 'utf8'));
-      const parent = data.include ? await resolveColors(path.resolve(path.dirname(file), data.include)) : {};
-      return { ...parent, ...data.colors };
-    }
-    const stock = await resolveColors(path.join(root, `extensions/theme-defaults/themes/2026-${type}.json`));
     const actual = { ...theme.colors };
     for (let i = 1; i <= 6; i++) {
       const key = `editorBracketHighlight.foreground${i}`;
       assert.equal(actual[key], punctuation, 'Syntax brackets must not introduce extra colors');
-      if (key in stock) actual[key] = stock[key];
+      if (key in stock.colors) actual[key] = stock.colors[key];
       else delete actual[key];
     }
-    assert.deepEqual(actual, stock, 'Every workbench and editor surface color must match its stock 2026 appearance');
+    assert.deepEqual(actual, stock.colors, 'Every workbench and editor surface color must match its stock 2026 appearance');
   });
-
+  test('Stock 2026 syntax snapshot matches the installed theme', async () => {
+    const snapshot = JSON.parse(await readFile(new URL(`../src/${type}-2026-syntax.json`, import.meta.url), 'utf8'));
+    assert.deepEqual(snapshot, { tokenColors: stock.tokenColors, semanticTokenColors: stock.semanticTokenColors }, `Update src/${type}-2026-syntax.json from the installed theme`);
+  });
+  test('Settings on the stock 2026 theme color files exactly like the theme', async () => {
+    const id = `[${type === 'dark' ? 'Dark' : 'Light'} 2026]`;
+    const { rules } = settings['editor.semanticTokenColorCustomizations'][id];
+    for (const [type, style] of Object.entries(theme.semanticTokenColors)) assert.deepEqual(rules[type], style, `Semantic rule ${type}`);
+    for (const type of Object.keys(stock.semanticTokenColors)) assert.ok(type in rules, `Stock semantic rule ${type} must be restated`);
+    // VS Code applies the editor foreground, then the stock rules, then customizations.
+    const customized = await createTokenizer({ tokenColors: [
+      { settings: { foreground: stock.colors['editor.foreground'] } }, ...stock.tokenColors, ...settings['editor.tokenColorCustomizations'][id].textMateRules,
+    ] });
+    const sources = [...await Promise.all(samples.map(async ([scope, file]) => [scope, file, await readFile(new URL(`../${file}`, import.meta.url), 'utf8')])), ['text.html.markdown', 'nested Markdown', markdown]];
+    for (const [scope, name, source] of sources) {
+      const expected = await tokenize(scope, source), actual = await customized(scope, source);
+      expected.forEach(({ line, spans }, row) => assert.deepEqual(actual[row].spans, spans, `${name}:${row + 1}: ${line}`));
+    }
+  });
 }

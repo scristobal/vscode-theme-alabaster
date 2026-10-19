@@ -1,5 +1,6 @@
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { palettes } from '../src/palettes.mjs';
+import { createSettings, formatSettings } from '../src/settings.mjs';
 import { createTheme } from '../src/theme.mjs';
 
 const check = process.argv.includes('--check');
@@ -51,3 +52,12 @@ for (const palette of palettes) {
   }
   console.log(`${check ? 'Checked' : 'Built'} ${palette.name}; syntax text contrast meets 4.5:1.`);
 }
+
+const settingsPath = new URL('still-settings.jsonc', root);
+const settings = formatSettings(await createSettings(palettes));
+if (check) {
+  if (await readFile(settingsPath, 'utf8') !== settings) throw new Error('still-settings.jsonc is stale. Run npm run build.');
+} else {
+  await writeFile(settingsPath, settings);
+}
+console.log(`${check ? 'Checked' : 'Built'} still-settings.jsonc for the stock 2026 themes.`);
